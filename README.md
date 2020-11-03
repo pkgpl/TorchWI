@@ -8,7 +8,7 @@ python setup.py install
 ```
 
 ### Dependency
-- pytorch
-- horovod 
+- [pytorch](https://pytorch.org)
+- [horovod](https://horovod.ai)
 - numpy, scipy, matplotlib
 
