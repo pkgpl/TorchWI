@@ -43,40 +43,6 @@ class LaplOperator(torch.autograd.Function):
         return grad_input, None
 
 
-torch_zero = torch.tensor(0.,dtype=torch.float64)
-log_tolmin = 1.e-100
-
-class LogResid(torch.autograd.Function):
-    @staticmethod
-    def forward(ctx, frd, true):
-        #nrhs, nx = true.shape
-        resid = torch.where(torch.abs(true)>log_tolmin, torch.log(torch.abs(frd/true)), torch_zero)
-
-        ctx.save_for_backward(frd)
-        return resid
-
-    @staticmethod
-    def backward(ctx, grad_output):
-        frd, = ctx.saved_tensors
-        grad_input = torch.where(torch.abs(frd)>log_tolmin, grad_output/frd, torch_zero)
-        return grad_input, None
-
-
-class LogLoss(torch.autograd.Function):
-    @staticmethod
-    def forward(ctx, frd, true):
-        #nrhs, nx = true.shape
-        resid = torch.where(torch.abs(true)>log_tolmin, torch.log(torch.abs(frd/true)), torch_zero)
-        loss = 0.5*torch.sum(resid**2)
-        ctx.save_for_backward(frd,resid)
-        return loss
-
-    @staticmethod
-    def backward(ctx, grad_output):
-        frd,resid = ctx.saved_tensors
-        grad_input = torch.where(torch.abs(frd)>log_tolmin, resid/frd, torch_zero)
-        return grad_input, None
-
 
 
 class SourceEstimationLogLapl():
