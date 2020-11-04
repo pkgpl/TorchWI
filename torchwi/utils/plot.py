@@ -4,6 +4,7 @@ import matplotlib
 # https://stackoverflow.com/questions/49921721/runtimeerror-main-thread-is-not-in-main-loop-with-matplotlib-and-flask
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+plt.rcParams.update({'figure.max_open_warning': 0})
 
 
 def perc_clip_val(data,perc=100):
