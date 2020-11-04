@@ -5,3 +5,4 @@ dist/
 *.rsf*
 runs/
 seismo.????
+.ipynb_checkpoints/

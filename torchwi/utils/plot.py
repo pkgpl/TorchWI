@@ -84,4 +84,24 @@ def plot_mig(mig,h,figsize=[15,4]):
     return fig
 
 
+def plot_seismo(seismo,dt,perc=100,figsize=[8,8],cmap="gray_r"):
+    # plot image traces
+    # seismo.shape = nx,nt
+    # figsize=[8,8]: matplotlib figure size [inch]
+    # perc=100: percent clip
+    # cmap="gray_r": matplotlib colormap
 
+    nx,nt = seismo.shape
+    plotdata=perc_clip(seismo,perc)
+    print("min=%s max=%s"%(plotdata.min(),plotdata.max()))
+
+    xmin, xmax = 0, nx-1
+    tmin, tmax = 0, (nt-1)*dt
+
+    fig,ax = plt.subplots(figsize=figsize)
+    img=ax.imshow(plotdata.T,aspect='auto',extent=[xmin,xmax,tmax,tmin],cmap=cmap)
+    ax.xaxis.tick_top()
+    ax.xaxis.set_label_position("top")
+    ax.set_xlabel("Trace number",fontsize='large')
+    ax.set_ylabel("Time (s)",fontsize='large')
+    return fig
