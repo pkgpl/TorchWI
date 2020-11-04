@@ -111,7 +111,7 @@ class MainLogger:
         tavg = (timer()-self.start)/(count+1)
 
         bar_len=60
-        frac = count/total
+        frac = count/(total-1)
         filled_len = int(round(bar_len*frac))
         percents = round(100*frac,1)
         bar = '='*filled_len + '-'*(bar_len-filled_len)
