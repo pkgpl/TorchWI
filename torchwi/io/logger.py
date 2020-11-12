@@ -11,10 +11,10 @@ import matplotlib.pyplot as plt
 formatter = logging.Formatter('[%(asctime)s] %(message)s')
 
 class MainLogger:
-    def __init__(self, log_dir=None, name='pkgpl', hparams=None, level=logging.DEBUG):
+    def __init__(self, log_dir=None,comment='', name='pkgpl', hparams=None, level=logging.DEBUG):
         self.start=timer()
         # pytorch tensorboard writer - master only
-        self.writer = SummaryWriter(log_dir=log_dir)
+        self.writer = SummaryWriter(log_dir=log_dir,comment=comment)
         self.get_logdir = self.writer.get_logdir
         self.add_hparams = self.writer.add_hparams
         self.add_text = self.writer.add_text
@@ -22,7 +22,7 @@ class MainLogger:
         self.add_scalars = self.writer.add_scalars
         self.add_figure = self.writer.add_figure
         self.flush = self.writer.flush
-        self.loss0 = None
+        self.loss0 = dict()
 
         self.add_text('Name', name)
         if hparams:
@@ -58,25 +58,40 @@ class MainLogger:
     def get_logdir(self):
         return self.writer.get_logdir()
 
-    def log_loss(self, loss, epoch):
-        self.add_scalar('loss', loss, epoch)
-        if self.loss0 is None:
-            self.loss0 = loss
-        self.add_scalar('normalized_loss', loss/self.loss0, epoch)
+    def log_loss(self, loss, epoch, name='loss',filename=None, add_figure=True,log_norm=True):
+        if filename is None:
+            filename = name+'.txt'
+        # file output
+        strftime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open("%s/%s"%(self.get_logdir(),filename),'a') as fl:
+            fl.write("%d %9.3e [%s]\n"%(epoch,loss,strftime))
+        # tensorboard
+        if add_figure:
+            self.add_scalar(name, loss, epoch)
+            if log_norm:
+                if self.loss0.get(name) is None:
+                    self.loss0[name] = loss
+                self.add_scalar('normalized_%s'%name, loss/self.loss0[name], epoch)
 
-    def log_gradient(self, grad, epoch, h,perc=99.,figsize=[15,4]):
+    def log_gradient(self, grad, epoch, h, filename='grad.', add_figure=True,figurename='gradient',perc=99.,figsize=[15,4]):
+        # file output
         g = grad.to('cpu').numpy()
-        g.tofile("%s/grad.%04d"%(self.get_logdir(),epoch))
-        fig=plot_mig(perc_clip(g,perc),h,figsize=figsize)
-        self.add_figure('gradient',fig,epoch)
-        plt.close(fig)
+        g.tofile("%s/%s%04d"%(self.get_logdir(),filename,epoch))
+        # tensorboard
+        if add_figure:
+            fig=plot_mig(perc_clip(g,perc),h,figsize=figsize)
+            self.add_figure(figurename,fig,epoch)
+            plt.close(fig)
 
-    def log_velocity(self, vel, epoch, h,vmin=None,vmax=None,figsize=[15,4]):
+    def log_velocity(self, vel, epoch, h, filename='vel.', add_figure=True,figurename='velocity',vmin=None,vmax=None,figsize=[15,4]):
+        # file output
         v = vel.to('cpu').detach().numpy()
-        v.tofile("%s/vel.%04d"%(self.get_logdir(),epoch))
-        fig = plot_vel(v,h,vmin,vmax,figsize=figsize)
-        self.add_figure('velocity',fig,epoch)
-        plt.close(fig)
+        v.tofile("%s/%s%04d"%(self.get_logdir(),filename,epoch))
+        # tensorboard
+        if add_figure:
+            fig = plot_vel(v,h,vmin,vmax,figsize=figsize)
+            self.add_figure(figurename,fig,epoch)
+            plt.close(fig)
 
     def output(self,model,epoch,loss,log_gradient=True):
         self.log_loss(loss,epoch)
@@ -87,10 +102,6 @@ class MainLogger:
             self.write("epoch %d, loss %9.3e, gnorm %9.3e"%(epoch,loss,grad_norm))
         else:
             self.write("epoch %d, loss %9.3e"%(epoch,loss))
-
-        strftime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        with open("%s/loss.txt"%(self.get_logdir()),'a') as fl:
-            fl.write("%d %9.3e [%s]\n"%(epoch,loss,strftime))
 
         if epoch < model.hparams.skip_output or epoch % model.hparams.skip_output ==0:
             if log_gradient:
