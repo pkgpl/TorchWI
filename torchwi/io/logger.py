@@ -106,7 +106,7 @@ class MainLogger:
         if epoch < model.hparams.skip_output or epoch % model.hparams.skip_output ==0:
             if log_gradient:
                 self.log_gradient(grad,epoch,model.h)
-            self.log_velocity(model.velocity(),epoch,model.h, model.hparams.vmin,model.hparams.vmax)
+            self.log_velocity(model.velocity(),epoch,model.h, vmin=model.hparams.vmin, vmax=model.hparams.vmax)
             self.flush()
 
 #    def final(self,args,loss):
