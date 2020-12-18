@@ -1,10 +1,14 @@
 import numpy as np
-import matplotlib
-# TKinter backend raises error: main thread is not in main loop
-# https://stackoverflow.com/questions/49921721/runtimeerror-main-thread-is-not-in-main-loop-with-matplotlib-and-flask
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-plt.rcParams.update({'figure.max_open_warning': 0})
+
+import __main__ as _main
+_interactive = not hasattr(_main,'__file__')
+if not _interactive: # do not run in an interactive session
+    # TKinter backend raises error: main thread is not in main loop
+    # https://stackoverflow.com/questions/49921721/runtimeerror-main-thread-is-not-in-main-loop-with-matplotlib-and-flask
+    import matplotlib
+    matplotlib.use('Agg')
+    plt.rcParams.update({'figure.max_open_warning': 0})
 
 
 def perc_clip_val(data,perc=100):
@@ -61,7 +65,8 @@ def plot_vel(vel,h,vmin=None,vmax=None,figsize=[15,4],unit='km/s',tick=np.arange
     cb.set_label(unit,fontsize=fs)
     ct=plt.getp(cb.ax,'ymajorticklabels')
     plt.setp(ct,fontsize=fs)
-    return fig
+    if not _interactive:
+        return fig
 
 
 def plot_mig(mig,h,figsize=[15,4]):
@@ -82,7 +87,8 @@ def plot_mig(mig,h,figsize=[15,4]):
     ax.set_ylabel('Depth (km)',fontsize=fs)
     ax.xaxis.tick_top()
     ax.xaxis.set_label_position("top")
-    return fig
+    if not _interactive:
+        return fig
 
 
 def plot_seismo(seismo,dt,perc=100,figsize=[8,8],cmap="gray_r"):
@@ -105,4 +111,5 @@ def plot_seismo(seismo,dt,perc=100,figsize=[8,8],cmap="gray_r"):
     ax.xaxis.set_label_position("top")
     ax.set_xlabel("Trace number",fontsize='large')
     ax.set_ylabel("Time (s)",fontsize='large')
-    return fig
+    if not _interactive:
+        return fig
