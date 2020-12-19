@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 import __main__ as _main
 _interactive = not hasattr(_main,'__file__')
+
 if not _interactive: # do not run in an interactive session
     # TKinter backend raises error: main thread is not in main loop
     # https://stackoverflow.com/questions/49921721/runtimeerror-main-thread-is-not-in-main-loop-with-matplotlib-and-flask
