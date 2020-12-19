@@ -38,6 +38,29 @@ class Frequency2dFDM():
         u.shape = (nrhs,self.nxp,self.nyp)
         return u[:,self.npml:-self.npml,:-self.npml]
 
+    def solve_forward(self, sxs,sy,ry, amplitude=1.0):
+        # distribute each source on two points (x only)
+        isxs_left = (sxs/self.h).astype(np.int32) # source x position
+        wgt_right = (sxs % self.h)/h # source weight
+        wgt_left  = 1.0 - wgt_right
+
+        self.isy = int(sy/self.h) # source y position
+        self.iry = int(ry/self.h) # receiver y position, used in surface_wavefield
+
+        nrhs = len(sxs)
+        f = np.zeros((nrhs,self.nxyp),dtype=self.dtype)
+        for ishot,isx_left in enumerate(isxs_left):
+            # left
+            f[ishot, (isx_left+self.npml)*self.nyp + self.isy] = wgt_left[ishot] * amplitude
+            # right
+            isx_right = isx_left+1
+            if isx_right < self.nx:
+                f[ishot, (isx_right+self.npml)*self.nyp + self.isy] = wgt_right[ishot] * amplitude
+
+        u = self.solver.solve(f)
+        u.shape = (nrhs,self.nxp,self.nyp)
+        return u[:,self.npml:-self.npml,:-self.npml]
+
     def surface_wavefield(self,u):
         # input u.shape = (nrhs,nx,ny)
         return u[:,:,self.iry]
