@@ -24,8 +24,8 @@ class TomoOperator(torch.autograd.Function):
         # virt: (nrhs,nx,ny)
         model, sxs,sy,ry = args # input: source x position, sy, ry, source amplitude
 
-        u    = model.prop.solve_impulse(sxs,sy,ry)
-        frd  = model.prop.surface_wavefield(u)
+        u    = model.prop.solve_forward(sxs,sy)
+        frd  = model.prop.surface_wavefield(u,ry)
         virt = model.prop.virtual_source(u)
         # save for gradient calculation
         ctx.model = model

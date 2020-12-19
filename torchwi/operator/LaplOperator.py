@@ -21,8 +21,8 @@ class LaplOperator(torch.autograd.Function):
         # virt: (nrhs,nx,ny)
         model, sxs,sy,ry, amplitude = args # input: source x position, sy, ry, source amplitude
 
-        u    = model.prop.solve_impulse(sxs,sy,ry,amplitude)
-        frd  = model.prop.surface_wavefield(u)
+        u    = model.prop.solve_forward(sxs,sy,amplitude)
+        frd  = model.prop.surface_wavefield(u,ry)
         virt = model.prop.virtual_source(u)
         # save for gradient calculation
         ctx.model = model
