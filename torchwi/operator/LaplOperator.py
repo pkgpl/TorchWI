@@ -42,29 +42,3 @@ class LaplOperator(torch.autograd.Function):
         grad_input = torch.sum(torch.from_numpy(virt*b), dim=0)
         return grad_input, None
 
-
-
-
-class SourceEstimationLogLapl():
-    def __init__(self):
-        self.amp = 1.0
-        self.zero()
-
-    def zero(self):
-        self.isum = torch.tensor(0)
-        self.sum_amp = torch.tensor(0.,dtype=torch.float64)
-
-    def add(self, resid):
-        self.sum_amp += torch.sum(resid).item()
-        self.isum += torch.sum(resid != 0).item()
-
-    def step(self):
-        log_amp = np.log(self.amp)
-        log_amp -= self.sum_amp/self.isum
-        self.amp = np.exp(log_amp)
-        self.zero()
-
-    def amplitude(self):
-        return self.amp
-
-
