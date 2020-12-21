@@ -27,7 +27,7 @@ class LaplLogLoss(torch.autograd.Function):
         resid = torch.where(torch.abs(true)>log_tolmin, torch.log(torch.abs(frd/true)), torch_zero)
         loss = 0.5*torch.sum(resid**2)
         ctx.save_for_backward(frd,resid)
-        return loss
+        return loss, resid
 
     @staticmethod
     def backward(ctx, grad_output):
