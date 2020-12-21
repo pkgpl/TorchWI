@@ -1,10 +1,12 @@
 import torch
 
 class BaseParameter(torch.nn.Module):
-    def __init__(self, vel, vmin=None, vmax=None):
+    def __init__(self, vel, vmin=None, vmax=None, water_mask=None, vwater=1.5):
         super().__init__()
         self.vmin=vmin
         self.vmax=vmax
+        self.water_mask=water_mask
+        self.pwater = self.vel_to_par(vwater)
         self.par=torch.nn.Parameter(self.vel_to_par(vel))
         if vmin and vmax:
             self.pmin=min(self.vel_to_par(vmin),self.vel_to_par(vmax))
@@ -35,19 +37,25 @@ class BaseParameter(torch.nn.Module):
 
     def forward(self):
         self.pclip()
+        self.waterlayer()
         return self.vel()
 
     def report(self):
         return "Parameter: %s"%(self.__class__.__name__)
 
+    def waterlayer(self):
+        if self.water_mask is not None:
+            with torch.no_grad():
+                self.par[self.water_mask] = self.pwater
+
 
 class VelocityParameter(BaseParameter):
-    def __init__(self, vel, vmin=None, vmax=None):
+    def __init__(self, vel, vmin=None, vmax=None, water_mask=None, vwater=1.5):
         super().__init__(vel, vmin, vmax)
 
 
 class SlothParameter(BaseParameter):
-    def __init__(self, vel, vmin=None, vmax=None):
+    def __init__(self, vel, vmin=None, vmax=None, water_mask=None, vwater=1.5):
         super().__init__(vel, vmin, vmax)
 
     def vel_to_par(self,vel):
@@ -58,7 +66,7 @@ class SlothParameter(BaseParameter):
 
 
 class SlownessParameter(BaseParameter):
-    def __init__(self, vel, vmin=None, vmax=None):
+    def __init__(self, vel, vmin=None, vmax=None, water_mask=None, vwater=1.5):
         super().__init__(vel, vmin, vmax)
 
     def vel_to_par(self,vel):
