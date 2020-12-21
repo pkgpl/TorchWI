@@ -17,9 +17,8 @@ class Frequency2dFDM():
 
     def factorize(self, omega, vel):
         self.omega = omega
-        self.vel = vel
-        self.lvirt = -2*omega**2/vel**3
         vp = vel.data.numpy()
+        self.lvirt = -2*omega**2/vp**3
         mat = impedance_matrix_vpad(self.omega, vp, self.h, self.npml)
         self.solver.analyze(mat)
         self.solver.factorize()
@@ -40,8 +39,8 @@ class Frequency2dFDM():
 
     def solve_forward(self, sxs,sy, amplitude=1.0):
         # distribute each source on two points (x only)
-        isxs_left = (sxs/self.h).astype(np.int32) # source x position
-        wgt_right = (sxs % self.h)/h # source weight
+        isxs_left = (sxs/self.h).int() # source x position
+        wgt_right = (sxs % self.h)/self.h # source weight
         wgt_left  = 1.0 - wgt_right
 
         self.isy = int(sy/self.h) # source y position

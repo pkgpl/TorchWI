@@ -26,8 +26,8 @@ class LaplOperator(torch.autograd.Function):
         virt = model.prop.virtual_source(u)
         # save for gradient calculation
         ctx.model = model
-        ctx.save_for_backward(virt)
-        return frd
+        ctx.save_for_backward(torch.from_numpy(virt))
+        return torch.from_numpy(frd)
 
     @staticmethod
     def backward(ctx, grad_output):
@@ -39,6 +39,6 @@ class LaplOperator(torch.autograd.Function):
         resid = grad_output
 
         b = model.prop.solve_resid(resid)
-        grad_input = torch.sum(torch.from_numpy(virt*b), dim=0)
+        grad_input = torch.sum(virt*torch.from_numpy(b), dim=0)
         return grad_input, None
 

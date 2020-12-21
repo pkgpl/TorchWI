@@ -30,7 +30,7 @@ class LaplLogLoss(torch.autograd.Function):
         return loss, resid
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, grad_output, grad_output_resid):
         frd,resid = ctx.saved_tensors
         grad_input = torch.where(torch.abs(frd)>log_tolmin, resid/frd, torch_zero)
         return grad_input, None
