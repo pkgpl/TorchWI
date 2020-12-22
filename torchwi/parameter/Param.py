@@ -15,6 +15,9 @@ class BaseParameter(torch.nn.Module):
     def gradient(self):
         return self.par.grad
 
+    def gradient_times(self,multiplier):
+        self.par.grad *= multiplier
+
     def grad_norm(self):
         return self.par.grad.norm(float('inf'))
 
