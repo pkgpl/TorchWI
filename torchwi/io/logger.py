@@ -7,11 +7,12 @@ from timeit import default_timer as timer
 from torch.utils.tensorboard import SummaryWriter
 from torchwi.utils.plot import perc_clip, plot_vel, plot_mig
 import matplotlib.pyplot as plt
+import yaml
 
 formatter = logging.Formatter('[%(asctime)s] %(message)s')
 
 class MainLogger:
-    def __init__(self, log_dir=None,comment='', name='pkgpl', hparams=None, level=logging.DEBUG):
+    def __init__(self, log_dir=None,comment='', name='pkgpl', level=logging.DEBUG):
         self.start=timer()
         # pytorch tensorboard writer - master only
         self.writer = SummaryWriter(log_dir=log_dir,comment=comment)
@@ -25,8 +26,6 @@ class MainLogger:
         self.loss0 = dict()
 
         self.add_text('Name', name)
-        if hparams:
-            self.add_text('Hyper parameters', str(vars(hparams)))
 
         # python logger
         self.logger = logging.getLogger(name)
@@ -57,6 +56,10 @@ class MainLogger:
 
     def get_logdir(self):
         return self.writer.get_logdir()
+
+    def log_hparams(self, name, hparams_dict):
+        self.print("%s:\n%s"%(name,yaml.dump(hparams_dict)))
+        self.add_text(name, str(hparams_dict))
 
     def log_loss(self, loss, epoch, name='loss',filename=None, add_figure=True,log_norm=True):
         if filename is None:
