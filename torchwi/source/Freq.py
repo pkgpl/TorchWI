@@ -26,3 +26,4 @@ class SourceEstimationFreqL2():
         return self.amp
 
 
+FreqL2SourceEstimation = SourceEstimationFreqL2

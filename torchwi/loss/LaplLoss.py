@@ -24,6 +24,23 @@ class LaplLogLoss(torch.autograd.Function):
     @staticmethod
     def forward(ctx, frd, true):
         #nrhs, nx = true.shape
+        mask = (torch.abs(true)>log_tolmin) & (torch.abs(frd)>log_tolmin)
+        resid = torch.where(mask, torch.log(torch.abs(frd/true)), torch_zero)
+        loss = 0.5*torch.sum(resid**2)
+        ctx.save_for_backward(frd,resid,mask)
+        return loss
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        frd,resid,mask = ctx.saved_tensors
+        grad_input = torch.where(mask, resid/frd, torch_zero)
+        return grad_input, None
+
+
+class LaplLogLossResid(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, frd, true):
+        #nrhs, nx = true.shape
         resid = torch.where(torch.abs(true)>log_tolmin, torch.log(torch.abs(frd/true)), torch_zero)
         loss = 0.5*torch.sum(resid**2)
         ctx.save_for_backward(frd,resid)
