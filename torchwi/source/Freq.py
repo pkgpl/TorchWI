@@ -2,11 +2,27 @@ import torch
 import numpy as np
 from torchwi.utils.ctensor import ca2rt, rt2ca
 
-
-class SourceEstimationFreqL2():
-    def __init__(self):
-        self.amp=1.0+0j
+class BaseSourceEstimation():
+    def __init__(self,amp):
+        self.amp=amp
         self.zero()
+
+    def zero(self):
+        pass
+
+    def add(self, frd,true):
+        pass
+
+    def step(self):
+        pass
+
+    def amplitude(self):
+        return self.amp
+
+
+class FreqL2SourceEstimation(BaseSourceEstimation):
+    def __init__(self,amp=1.0+0j):
+        super().__init__(amp)
 
     def zero(self):
         self.sumup = 0.
@@ -22,8 +38,3 @@ class SourceEstimationFreqL2():
         self.amp = self.sumup/self.sumdn
         self.zero()
 
-    def amplitude(self):
-        return self.amp
-
-
-FreqL2SourceEstimation = SourceEstimationFreqL2
