@@ -126,7 +126,7 @@ if __name__ == '__main__':
         optimizer.zero_grad()
 
         for sx,sy,true,ishot in dataloader:
-            joblogger.log(epoch,nshot,ishot)
+            joblogger.log_shot(epoch,nshot,ishot)
 
             true = true.to(args.device)
             ry = sy

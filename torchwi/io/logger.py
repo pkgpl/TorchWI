@@ -141,6 +141,7 @@ class JobLogger():
         self.rank=rank
 
         self.logger = logging.getLogger('job logger')
+        self.stream_logger = logging.getLogger('tty')
         fileHandler = logging.FileHandler("%s/log_rank.%03d"%(logdir,rank))
         fileHandler.setFormatter(formatter)
         self.logger.addHandler(fileHandler)
@@ -150,6 +151,14 @@ class JobLogger():
         self.ip = socket.gethostbyname(self.hostname)
         self.logger.debug("Hostname: %s, IP: %s"%(self.hostname,self.ip))
 
-    def log(self, epoch, nshot, ishot):
+    def print(self, msg):
+        self.logger.debug(msg)
+        self.stream_logger.debug(msg)
+        sys.stdout.flush()
+
+    def log(self, msg):
+        self.logger.debug(msg)
+
+    def log_shot(self, epoch, nshot, ishot):
         self.logger.debug("epoch %d, nshot %d, rank %d, ishot %d"%(epoch,nshot,self.rank,ishot))
 
