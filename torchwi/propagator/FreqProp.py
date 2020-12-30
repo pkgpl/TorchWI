@@ -19,9 +19,12 @@ class Frequency2dFDM():
         self.omega = omega
         vp = vel.data.numpy()
         self.lvirt = -2*omega**2/vp**3
-        mat = impedance_matrix_vpad(self.omega, vp, self.h, self.npml)
+        mat = impedance_matrix_vpad(self.omega, vp, self.h, self.npml,mat='csr',dtype=self.dtype)
+        print('before anal')
         self.solver.analyze(mat)
+        print('before fact')
         self.solver.factorize()
+        print('after fact')
 
     def solve_impulse(self, sxs,sy,ry, amplitude=1.0):
         isxs = (sxs/self.h).int() # source x position
@@ -35,7 +38,7 @@ class Frequency2dFDM():
 
         u = self.solver.solve(f)
         u.shape = (nrhs,self.nxp,self.nyp)
-        return u[:,self.npml:-self.npml,:-self.npml]
+        return self.cut_pml(u)
 
     def solve_forward(self, sxs,sy, amplitude=1.0):
         # distribute each source on two points (x only)
@@ -57,7 +60,16 @@ class Frequency2dFDM():
 
         u = self.solver.solve(f)
         u.shape = (nrhs,self.nxp,self.nyp)
-        return u[:,self.npml:-self.npml,:-self.npml]
+        return self.cut_pml(u)
+
+    def solve_resid(self, resid):
+        nrhs = resid.shape[0]
+        f = np.zeros((nrhs, self.nxp,self.nyp),dtype=self.dtype)
+        f[:,self.npml:-self.npml,self.iry] = resid[:,:]
+        f.shape=(nrhs,self.nxyp)
+        b = self.solver.solve_transposed(f)
+        b.shape = (nrhs,self.nxp,self.nyp)
+        return self.cut_pml(b)
 
     def surface_wavefield(self,u,ry=None):
         # u: output from solve_forward/solve_impulse
@@ -70,15 +82,14 @@ class Frequency2dFDM():
     def virtual_source(self,u):
         return self.lvirt * u
 
-    def solve_resid(self, resid):
-        nrhs = resid.shape[0]
-        f = np.zeros((nrhs, self.nxp,self.nyp),dtype=self.dtype)
-        f[:,self.npml:-self.npml,self.iry] = resid[:,:]
-        f.shape=(nrhs,self.nxyp)
-        b = self.solver.solve_transposed(f)
-        b.shape = (nrhs,self.nxp,self.nyp)
-        return b[:,self.npml:-self.npml,:-self.npml]
+    def cut_pml(self,u):
+        if self.npml == 0:
+            return u
+        else:
+            return u[:,self.npml:-self.npml,:-self.npml]
 
     def finalize(self):
         self.solver.clear()
+
+
 

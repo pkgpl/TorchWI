@@ -9,10 +9,12 @@ def traveltime(u,omega_real):
 
 
 class Tomo2d(Freq2d):
-    def __init__(self,nx,ny,h,npml=10):
-        super(Tomo2d, self).__init__(nx,ny,h,npml)
+    def __init__(self,nx,ny,h,npml=0,mtype=13,dtype=np.complex128):
+        super(Tomo2d, self).__init__(nx,ny,h,npml,mtype,dtype)
         self.op = TomoOperator.apply
 
+    def forward(self, sxs,sy,ry):
+        return self.op(self.vel, (self, sxs,sy,ry))
 
 class TomoOperator(torch.autograd.Function):
     @staticmethod
@@ -30,7 +32,7 @@ class TomoOperator(torch.autograd.Function):
         # save for gradient calculation
         ctx.model = model
         ctx.save_for_backward(ca2rt(virt),ca2rt(frd))
-        return torch.from_numpy(traveltime(frd))
+        return torch.from_numpy(traveltime(frd,model.omega.real))
 
     @staticmethod
     def backward(ctx, grad_output):

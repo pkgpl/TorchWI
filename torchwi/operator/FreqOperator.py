@@ -5,14 +5,15 @@ from torchwi.propagator.FreqProp import Frequency2dFDM as Prop
 
 
 class Freq2d(torch.nn.Module):
-    def __init__(self,nx,ny,h,npml=10):
+    def __init__(self,nx,ny,h,npml=10,mtype=13,dtype=np.complex64):
         super(Freq2d, self).__init__()
         self.h=h
-        self.prop = Prop(nx,ny,h,npml)
+        self.prop = Prop(nx,ny,h,npml,mtype,dtype)
         self.op = FreqOperator.apply
 
     def factorize(self, omega, vel):
         self.vel=vel
+        self.omega=omega
         self.prop.factorize(omega,vel)
 
     def forward(self, sxs,sy,ry,amplitude=1.0):
