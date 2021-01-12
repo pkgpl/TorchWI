@@ -32,17 +32,16 @@ class FreqDataset(torch.utils.data.Dataset):
 
 
 class AllFreqData(torch.utils.data.Dataset):
-    def __init__(self, freqs):
+    def __init__(self, freqs, ifreqs):
         super().__init__()
-        self.nfreq = len(freqs)
         self.freqs = freqs
+        self.ifreqs = ifreqs
 
     def __len__(self):
-        return self.nfreq
+        return len(self.freqs)
 
     def __getitem__(self,index):
-        ifreq = index
-        return index, self.freqs[index]
+        return self.ifreqs[index], self.freqs[index]
 
 
 def _freq_dist_dataloader(dataset, size=None,rank=None):
@@ -53,8 +52,10 @@ def _freq_dist_dataloader(dataset, size=None,rank=None):
     return torch.utils.data.DataLoader(dataset,batch_size=1,sampler=train_sampler)
 
 
-def freq_distributed_dataloader(freqs, size=None, rank=None):
-    dataset = AllFreqData(freqs)
+def freq_distributed_dataloader(freqs, ifreqs=None, size=None, rank=None):
+    if ifreqs is None:
+        ifreqs = np.arange(len(freqs))
+    dataset = AllFreqData(freqs, ifreqs)
     return _freq_dist_dataloader(dataset, size,rank)
 
 

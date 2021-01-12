@@ -10,8 +10,8 @@ class LaplDataset(FreqDataset):
         super().__init__(ftrue, sxy_all, dtype=np.float64)
 
 
-def lapl_distributed_dataloader(freqs, size=None, rank=None):
-    return freq_distributed_dataloader(freqs)
+def lapl_distributed_dataloader(freqs,ifreqs=None, size=None, rank=None):
+    return freq_distributed_dataloader(freqs,ifreqs)
 
 def lapl_shot_dataloader(ftrue,sxy_all,nrhs,dtype=np.float64):
     return freq_shot_dataloader(ftrue,sxy_all,nrhs,dtype)
