@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-from torchwi.propagator import td2d_cpu
 
 # for cuda shared memory: BDIMX, BDIMY same to those defined in "td2d_cuda.h"
 BDIMX = 16
@@ -105,6 +104,7 @@ class Time2d(torch.nn.Module):
         else:
             self.nx = self.nx_org
             self.ny = self.ny_org
+            from torchwi.propagator import td2d_cpu
             self.time_modeling = get_operator(td2d_cpu)
         self.dimx = self.nx + self.order
         self.dimy = self.ny + self.order
