@@ -2,7 +2,7 @@
 #include <string.h>
 #include "td2d_cpu.h"
 
-void c_fdm_forward(
+void c_fdm_forward_only(
         float *forward,
         float *u1, float *u2, float *u3,
         float *vel, float *w,
@@ -70,8 +70,4 @@ void c_fdm_forward(
     }// it
 }//forward
 
-
-void c_fdm_backward()
-{
-}//backward
 

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "td2d_cuda.h"
 
-void cuda_fdm_forward(
+void cuda_fdm_forward_only(
         float *forward,
         float *d_u1, float *d_u2, float *d_u3,
         float *d_vel, float *w,
@@ -76,8 +76,4 @@ void cuda_fdm_forward(
     }// it
 }//forward
 
-
-void cuda_fdm_backward()
-{
-}//backward
 

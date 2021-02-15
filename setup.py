@@ -38,7 +38,7 @@ if torch.cuda.is_available():
 
 setuptools.setup(
         name='torchwi',
-        version='0.3',
+        version='0.35',
         description='Full waveform inversion using PyTorch',
         author='Wansoo Ha',
         author_email='wansooha@gmail.com',
@@ -46,4 +46,6 @@ setuptools.setup(
         ext_modules=ext_modules,
         cmdclass={
             'build_ext': BuildExtension
-        })
+        },
+        zip_safe = False
+        )

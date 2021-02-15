@@ -1,7 +1,7 @@
 #include <torch/extension.h>
 
 // cuda
-void cuda_fdm_forward(
+void cuda_fdm_forward_only(
     float* forward,
     float* u1,
     float* u2,
@@ -50,7 +50,7 @@ void fdm_forward(
     CHECK_INPUT(u3);
     CHECK_INPUT(vel);
     //CHECK_INPUT(w); //w in cpu
-    cuda_fdm_forward(
+    cuda_fdm_forward_only(
             forward.data_ptr<float>(),
             u1.data_ptr<float>(),
             u2.data_ptr<float>(),

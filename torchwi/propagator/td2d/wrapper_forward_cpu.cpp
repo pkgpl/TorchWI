@@ -1,7 +1,7 @@
 #include <torch/extension.h>
 
 // cuda
-void c_fdm_forward(
+void c_fdm_forward_only(
     float* forward,
     float* u1,
     float* u2,
@@ -19,8 +19,6 @@ void c_fdm_forward(
     const float ry
 );
 
-void c_fdm_backward(
-);
 
 #define CHECK_CONTIGUOUS(x) TORCH_CHECK(x.is_contiguous(), #x "must be contiguous")
 #define CHECK_INPUT(x) CHECK_CONTIGUOUS(x)
@@ -49,7 +47,7 @@ void fdm_forward(
     CHECK_INPUT(u3);
     CHECK_INPUT(vel);
     CHECK_INPUT(w);
-    c_fdm_forward(
+    c_fdm_forward_only(
             forward.data_ptr<float>(),
             u1.data_ptr<float>(),
             u2.data_ptr<float>(),
