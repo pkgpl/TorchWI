@@ -20,11 +20,8 @@ class Frequency2dFDM():
         vp = vel.data.numpy()
         self.lvirt = -2*omega**2/vp**3
         mat = impedance_matrix_vpad(self.omega, vp, self.h, self.npml,mat='csr',dtype=self.dtype)
-        print('before anal')
         self.solver.analyze(mat)
-        print('before fact')
         self.solver.factorize()
-        print('after fact')
 
     def solve_impulse(self, sxs,sy,ry, amplitude=1.0):
         isxs = (sxs/self.h).int() # source x position
