@@ -7,14 +7,14 @@ src_dir="torchwi/propagator/td2d/"
 
 ext_modules = [
         CppExtension("torchwi.propagator.td2d_cpu",[
-            src_dir+'td2d_cpu.c',
-            src_dir+'propagator_cpu.c',
+            src_dir+'td2d_cpu.cpp',
+            src_dir+'propagator_cpu.cpp',
             src_dir+"wrapper_cpu.cpp",
             ],
             extra_compile_args=["-fopenmp"]),
         CppExtension("torchwi.propagator.td2d_forward_cpu",[
-            src_dir+'td2d_cpu.c',
-            src_dir+'propagator_forward_cpu.c',
+            src_dir+'td2d_cpu.cpp',
+            src_dir+'propagator_forward_cpu.cpp',
             src_dir+"wrapper_forward_cpu.cpp",
             ],
             extra_compile_args=["-fopenmp"])
