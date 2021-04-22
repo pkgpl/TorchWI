@@ -50,6 +50,51 @@ def get_operator(_propagator):
     return TimeOperator.apply
 
 
+def get_exa_operator(_propagator):
+
+    class TimeOperator(torch.autograd.Function):
+
+        @staticmethod
+        def forward(ctx, vel, args):
+            # batch size=1
+            # input/output vel,grad: (nx,ny)
+            # frd: (nt,nx)
+            # virt: (nt,dimxy)
+            # internal vpad: (dimy,dimx)
+            sx,sy,ry,m = args
+
+            _propagator.forward(m.frd, m.exa, m.iexa,
+                    m.u1, m.u2, m.u3, m.vpad, m.w,
+                    m.order, m.dimx, m.dimy, m.nt,
+                    m.h, m.dt,
+                    sx.item(),sy.item(),ry.item())
+                    
+            # save for gradient calculation
+            ctx.model = m
+            ctx.save_for_backward(m.exa, m.iexa, ry)
+            return m.frd.view(m.nt,m.nx)[:,:m.nx_org]
+
+        @staticmethod
+        def backward(ctx, grad_output):
+            # resid = grad_output: (nt,nx)
+            # grad_input: (nx,ny)
+            exa, iexa, ry = ctx.saved_tensors
+            m = ctx.model
+
+            resid = grad_output
+            grad = _propagator.backward(exa, iexa,
+                    m.u1, m.u2, m.u3, m.vpad, resid,
+                    m.order, m.dimx, m.dimy, m.nt,
+                    m.h, m.dt, ry.item())
+            # grad shape=(dimx,) # x fast
+            grad = grad.view(m.dimy,m.dimx)[m.ne:m.ne+m.ny_org,m.ne:m.ne+m.nx_org]
+            # grad_input: (nx,ny)
+            grad_input = grad.transpose(0,1)
+            return grad_input, None
+
+    return TimeOperator.apply
+
+
 def get_forward_operator(_propagator):
 
     class TimeOperator(torch.autograd.Function):
@@ -79,12 +124,13 @@ def get_forward_operator(_propagator):
 
 
 class Time2d(torch.nn.Module):
-    def __init__(self,nx,ny,h,w,dt,order,device):
+    def __init__(self,nx,ny,h,w,dt,order,device, exa=False):
         """
         input/output vel,grad shape = (nx,ny) # y fast
         interval vpad shape = (dimy,dimx) # x fast
         """
         super(Time2d, self).__init__()
+        self.exa = exa
 
         self.device = device
         self.h = h
@@ -99,13 +145,21 @@ class Time2d(torch.nn.Module):
         if self.device == 'cuda':
             self.nx=dim_pad(self.nx_org,BDIMX)
             self.ny=dim_pad(self.ny_org,BDIMY)
-            from torchwi.propagator import td2d_cuda
-            self.time_modeling = get_operator(td2d_cuda)
+            if self.exa:
+                from torchwi.propagator import td2d_exa_cuda
+                self.time_modeling = get_exa_operator(td2d_exa_cuda)
+            else:
+                from torchwi.propagator import td2d_cuda
+                self.time_modeling = get_operator(td2d_cuda)
         else:
             self.nx = self.nx_org
             self.ny = self.ny_org
-            from torchwi.propagator import td2d_cpu
-            self.time_modeling = get_operator(td2d_cpu)
+            if self.exa:
+                from torchwi.propagator import td2d_exa_cpu
+                self.time_modeling = get_exa_operator(td2d_exa_cpu)
+            else:
+                from torchwi.propagator import td2d_cpu
+                self.time_modeling = get_operator(td2d_cpu)
         self.dimx = self.nx + self.order
         self.dimy = self.ny + self.order
         self.dimxy = self.dimx * self.dimy
@@ -115,7 +169,11 @@ class Time2d(torch.nn.Module):
         self.u2   = torch.zeros(self.dimxy, device=self.device)
         self.u3   = torch.zeros(self.dimxy, device=self.device)
         self.frd  = torch.zeros((self.nt*self.nx), device=self.device)
-        self.virt = torch.zeros((self.nt*self.dimxy), device=self.device)
+        if self.exa:
+            self.exa = torch.zeros(self.dimxy, device=self.device)
+            self.iexa = torch.zeros(self.dimxy, dtype=torch.int16, device=self.device)
+        else:
+            self.virt = torch.zeros((self.nt*self.dimxy), device=self.device)
 
     def pad_vel(self,vel):
         pad_shape = (self.ne, self.nx-self.nx_org+self.ne, self.ne, self.ny-self.ny_org+self.ne)

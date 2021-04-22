@@ -12,6 +12,12 @@ ext_modules = [
             src_dir+"wrapper_cpu.cpp",
             ],
             extra_compile_args=["-fopenmp"]),
+#        CppExtension("torchwi.propagator.td2d_exa_cpu",[
+#            src_dir+'td2d_cpu.c',
+#            src_dir+'propagator_exa_cpu.c',
+#            src_dir+"wrapper_exa_cpu.cpp",
+#            ],
+#            extra_compile_args=["-fopenmp"]),
         CppExtension("torchwi.propagator.td2d_forward_cpu",[
             src_dir+'td2d_cpu.c',
             src_dir+'propagator_forward_cpu.c',
@@ -26,6 +32,13 @@ if torch.cuda.is_available():
             src_dir+'td2d_cuda.cu',
             src_dir+'propagator_cuda.cu',
             src_dir+"wrapper_cuda.cpp",
+            ])
+    )
+    ext_modules.append(
+        CUDAExtension("torchwi.propagator.td2d_exa_cuda",[
+            src_dir+'td2d_cuda.cu',
+            src_dir+'propagator_exa_cuda.cu',
+            src_dir+"wrapper_exa_cuda.cpp",
             ])
     )
     ext_modules.append(

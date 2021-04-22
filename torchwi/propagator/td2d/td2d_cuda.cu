@@ -177,6 +177,33 @@ __global__ void cuda_grad(float *d_virt,float *d_u3,float* d_grad,const int dimx
 	d_grad[i] += -d_virt[i]*d_u3[i];
 }
 
+// excitation amplitude method
+
+__global__ void cuda_exa(float *d_exa, short *d_iexa,
+        float *d_vel,float *d_u1, float *d_u2, float *d_u3,
+        const int dimxy, const int it, const float cons)
+{
+	int i=blockIdx.x*blockDim.x+threadIdx.x;
+	if(i>dimxy) return;
+    float v = d_vel[i];
+    float u = cons/(v*v*v) * (d_u3[i] - 2.f*d_u2[i] + d_u1[i]); // source wavefield
+    if(u > d_exa[i])
+    {
+        d_exa[i] = u;
+        d_iexa[i] = it;
+    }
+}
+
+__global__ void cuda_crosscorr_exa(float *d_grad, float *d_exa, short *d_iexa,
+        float *d_u3, // receiver wavefield
+        const int dimxy, const int it)
+{
+	int i=blockIdx.x*blockDim.x+threadIdx.x;
+	if(i>dimxy) return;
+    if(d_iexa[i] == it)
+        d_grad[i] = -d_exa[i] * d_u3[i];
+}
+
 
 // Keys Boundary Condition
 
