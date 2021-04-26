@@ -130,7 +130,7 @@ class Time2d(torch.nn.Module):
         interval vpad shape = (dimy,dimx) # x fast
         """
         super(Time2d, self).__init__()
-        self.exa = exa
+        self._exa = exa
 
         self.device = device
         self.h = h
@@ -145,7 +145,7 @@ class Time2d(torch.nn.Module):
         if self.device == 'cuda':
             self.nx=dim_pad(self.nx_org,BDIMX)
             self.ny=dim_pad(self.ny_org,BDIMY)
-            if self.exa:
+            if self._exa:
                 from torchwi.propagator import td2d_exa_cuda
                 self.time_modeling = get_exa_operator(td2d_exa_cuda)
             else:
@@ -154,7 +154,7 @@ class Time2d(torch.nn.Module):
         else:
             self.nx = self.nx_org
             self.ny = self.ny_org
-            if self.exa:
+            if self._exa:
                 from torchwi.propagator import td2d_exa_cpu
                 self.time_modeling = get_exa_operator(td2d_exa_cpu)
             else:
@@ -169,7 +169,7 @@ class Time2d(torch.nn.Module):
         self.u2   = torch.zeros(self.dimxy, device=self.device)
         self.u3   = torch.zeros(self.dimxy, device=self.device)
         self.frd  = torch.zeros((self.nt*self.nx), device=self.device)
-        if self.exa:
+        if self._exa:
             self.exa = torch.zeros(self.dimxy, device=self.device)
             self.iexa = torch.zeros(self.dimxy, dtype=torch.int16, device=self.device)
         else:

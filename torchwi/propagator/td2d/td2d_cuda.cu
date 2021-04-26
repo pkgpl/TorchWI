@@ -186,10 +186,10 @@ __global__ void cuda_exa(float *d_exa, short *d_iexa,
 	int i=blockIdx.x*blockDim.x+threadIdx.x;
 	if(i>dimxy) return;
     float v = d_vel[i];
-    float u = cons/(v*v*v) * (d_u3[i] - 2.f*d_u2[i] + d_u1[i]); // source wavefield
-    if(u > d_exa[i])
+    float virt = cons/(v*v*v) * (d_u3[i] - 2.f*d_u2[i] + d_u1[i]); // source wavefield
+    if(fabs(virt) > fabs(d_exa[i]))
     {
-        d_exa[i] = u;
+        d_exa[i] = virt;
         d_iexa[i] = it;
     }
 }
