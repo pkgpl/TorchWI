@@ -56,7 +56,7 @@ def forward_np(frd, virt,
         td2d_base.inject_source(u3, w[it], isx, isy, ne, vp2, dt2)
         td2d_base.bc_keys(u3, u2, u1, vpad, vp2, dt2, h2, hdt, ne, dimx, dimy)
         frd[it,:] = u3[ne:-ne, iry+ne]
-        virt[it,:] = td2d_base.diff2(u3, u2, u1, dt2).flatten() / vp3
+        virt[it,:] = -2 / vp3 * td2d_base.diff2(u3, u2, u1, dt2).flatten()
         u1, u2 ,u3 = u2, u3, u1
     frd.shape = frd_org_shape
 

@@ -18,10 +18,8 @@ def fdm_o4(up, uo, um, vel2, dtoh2, dimx, dimy):
     for i in range(ne, dimx - ne):
         for j in range(ne, dimy - ne):
             up[i, j] = vel2[i, j] * dtoh2 * (-5. * uo[i, j]
-                                             + 1.3333333333 * (
-                                             uo[i - 1, j] + uo[i + 1, j] + uo[i, j - 1] + uo[i, j + 1])
-                                             - 0.0833333333 * (
-                                             uo[i - 2, j] + uo[i + 2, j] + uo[i, j - 2] + uo[i, j + 2])) \
+                                             + 1.3333333333 * ( uo[i - 1, j] + uo[i + 1, j] + uo[i, j - 1] + uo[i, j + 1])
+                                             - 0.0833333333 * ( uo[i - 2, j] + uo[i + 2, j] + uo[i, j - 2] + uo[i, j + 2])) \
                        + 2. * uo[i, j] - um[i, j]
 
 
@@ -31,14 +29,10 @@ def fdm_o8(up, uo, um, vel2, dtoh2, dimx, dimy):
     for i in range(ne, dimx - ne):
         for j in range(ne, dimy - ne):
             up[i, j] = vel2[i, j] * dtoh2 * (-5.694444444444444 * uo[i, j]
-                                             + 1.600000000000000000 * (
-                                             uo[i - 1, j] + uo[i + 1, j] + uo[i, j - 1] + uo[i, j + 1])
-                                             - 0.200000000000000000 * (
-                                             uo[i - 2, j] + uo[i + 2, j] + uo[i, j - 2] + uo[i, j + 2])
-                                             + 0.025396825396825397 * (
-                                             uo[i - 3, j] + uo[i + 3, j] + uo[i, j - 3] + uo[i, j + 3])
-                                             - 0.0017857142857142857 * (
-                                             uo[i - 4, j] + uo[i + 4, j] + uo[i, j - 4] + uo[i, j + 4])) \
+                                             + 1.600000000000000000 * ( uo[i - 1, j] + uo[i + 1, j] + uo[i, j - 1] + uo[i, j + 1])
+                                             - 0.200000000000000000 * ( uo[i - 2, j] + uo[i + 2, j] + uo[i, j - 2] + uo[i, j + 2])
+                                             + 0.025396825396825397 * ( uo[i - 3, j] + uo[i + 3, j] + uo[i, j - 3] + uo[i, j + 3])
+                                             - 0.0017857142857142857 * ( uo[i - 4, j] + uo[i + 4, j] + uo[i, j - 4] + uo[i, j + 4])) \
                        + 2. * uo[i, j] - um[i, j]
 
 
