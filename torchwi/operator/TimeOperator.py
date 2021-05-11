@@ -79,7 +79,7 @@ def get_forward_operator(_propagator):
 
 
 class Time2d(torch.nn.Module):
-    def __init__(self,nx,ny,h,w,dt,order,device):
+    def __init__(self,nx,ny,h,w,dt,order,device,prop='ext'):
         """
         input/output vel,grad shape = (nx,ny) # y fast
         interval vpad shape = (dimy,dimx) # x fast
@@ -101,11 +101,17 @@ class Time2d(torch.nn.Module):
             self.ny=dim_pad(self.ny_org,BDIMY)
             from torchwi.propagator import td2d_cuda
             self.time_modeling = get_operator(td2d_cuda)
-        else:
+        elif prop=='ext':
             self.nx = self.nx_org
             self.ny = self.ny_org
             from torchwi.propagator import td2d_cpu
             self.time_modeling = get_operator(td2d_cpu)
+        elif prop=='numba':
+            self.nx = self.nx_org
+            self.ny = self.ny_org
+            from torchwi.propagator import TimeProp
+            self.time_modeling = get_operator(TimeProp)
+
         self.dimx = self.nx + self.order
         self.dimy = self.ny + self.order
         self.dimxy = self.dimx * self.dimy
