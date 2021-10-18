@@ -5,7 +5,8 @@ from .FreqOperator import Freq2d
 
 
 def traveltime(u,omega_real):
-    return -np.imag(np.log(u))/omega_real
+    ttime = -np.imag(np.log(u))/omega_real
+    return ttime.astype(np.float32)
 
 
 class Tomo2d(Freq2d):
@@ -49,7 +50,7 @@ class TomoOperator(torch.autograd.Function):
         resid = -model.prop.omega.real * grad_output.numpy() / frd
 
         b = model.prop.solve_resid(resid,ry)
-        grad_input = torch.sum(torch.from_numpy(np.imag(virt*b)), dim=0)
+        grad_input = torch.sum(torch.from_numpy(np.imag(virt*b).astype(np.float32)), dim=0)
         return grad_input, None
 
 
