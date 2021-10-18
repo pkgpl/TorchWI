@@ -37,7 +37,7 @@ class Frequency2dFDM():
 #        u.shape = (nrhs,self.nxp,self.nyp)
 #        return self.cut_pml(u)
 
-    def solve_forward(self, sxs,sy, amplitude=1.0):
+    def impulse_source(self, sxs,sy,amplitude=1.0):
         # distribute each source on two points (x only)
         isxs_left = (sxs/self.h).int() # source x position
         wgt_right = (sxs % self.h)/self.h # source weight
@@ -54,12 +54,9 @@ class Frequency2dFDM():
             isx_right = isx_left+1
             if isx_right < self.nx:
                 f[ishot, (isx_right+self.npml)*self.nyp + self.isy] = wgt_right[ishot] * amplitude
+        return f
 
-        u = self.solver.solve(f)
-        u.shape = (nrhs,self.nxp,self.nyp)
-        return self.cut_pml(u)
-
-    def solve_resid(self, resid, ry):
+    def adjoint_source(self, resid, ry):
         iry = int(ry/self.h) # receiver y position
         nrhs = resid.shape[0]
         f = np.zeros((nrhs, self.nxp,self.nyp),dtype=self.dtype)
@@ -68,6 +65,19 @@ class Frequency2dFDM():
         else:
             f[:,self.npml:-self.npml,iry] = resid[:,:]
         f.shape=(nrhs,self.nxyp)
+        return f
+
+    def solve_forward(self, sxs,sy, amplitude=1.0):
+        f = self.impulse_source(sxs,sy,amplitude)
+        nrhs = f.shape[0]
+
+        u = self.solver.solve(f)
+        u.shape = (nrhs,self.nxp,self.nyp)
+        return self.cut_pml(u)
+
+    def solve_resid(self, resid, ry):
+        f = self.adjoint_source(resid, ry)
+        nrhs = f.shape[0]
         b = self.solver.solve_transposed(f)
         b.shape = (nrhs,self.nxp,self.nyp)
         return self.cut_pml(b)
