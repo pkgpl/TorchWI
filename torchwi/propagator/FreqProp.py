@@ -63,7 +63,10 @@ class Frequency2dFDM():
         iry = int(ry/self.h) # receiver y position
         nrhs = resid.shape[0]
         f = np.zeros((nrhs, self.nxp,self.nyp),dtype=self.dtype)
-        f[:,self.npml:-self.npml,iry] = resid[:,:]
+        if self.npml == 0:
+            f[:,:,iry] = resid[:,:]
+        else:
+            f[:,self.npml:-self.npml,iry] = resid[:,:]
         f.shape=(nrhs,self.nxyp)
         b = self.solver.solve_transposed(f)
         b.shape = (nrhs,self.nxp,self.nyp)
