@@ -31,6 +31,7 @@ class TomoOperator(torch.autograd.Function):
         virt = model.prop.virtual_source(u)
         # save for gradient calculation
         ctx.model = model
+        ctx.ry = ry
         ctx.save_for_backward(ca2rt(virt),ca2rt(frd))
         return torch.from_numpy(traveltime(frd,model.omega.real))
 
@@ -40,13 +41,14 @@ class TomoOperator(torch.autograd.Function):
         # b: (nrhs,nx,ny)
         virt,frd = ctx.saved_tensors
         model = ctx.model
+        ry    = ctx.ry
 
         # float32 tensor to complex64 ndarray
         virt = rt2ca(virt)
         frd = rt2ca(frd)
         resid = -model.prop.omega.real * grad_output.numpy() / frd
 
-        b = model.prop.solve_resid(resid)
+        b = model.prop.solve_resid(resid,ry)
         grad_input = torch.sum(torch.from_numpy(np.imag(virt*b)), dim=0)
         return grad_input, None
 

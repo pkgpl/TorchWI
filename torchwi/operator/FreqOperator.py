@@ -38,6 +38,7 @@ class FreqOperator(torch.autograd.Function):
         virt = model.prop.virtual_source(u)
         # save for gradient calculation
         ctx.model = model
+        ctx.ry = ry
         ctx.save_for_backward(ca2rt(virt))
         return ca2rt(frd)
 
@@ -47,12 +48,13 @@ class FreqOperator(torch.autograd.Function):
         # b: (nrhs,nx,ny)
         virt, = ctx.saved_tensors
         model = ctx.model
+        ry    = ctx.ry
 
         # float32 tensor to complex64 ndarray
         virt = rt2ca(virt)
         resid = rt2ca(grad_output)
 
-        b = model.prop.solve_resid(resid)
+        b = model.prop.solve_resid(resid,ry)
         grad_input = torch.sum(torch.from_numpy(np.real(virt*b)), dim=0)
         return grad_input, None
 

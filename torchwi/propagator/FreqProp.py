@@ -23,19 +23,19 @@ class Frequency2dFDM():
         self.solver.analyze(mat)
         self.solver.factorize()
 
-    def solve_impulse(self, sxs,sy,ry, amplitude=1.0):
-        isxs = (sxs/self.h).int() # source x position
-        self.isy = int(sy/self.h) # source y position
-        self.iry = int(ry/self.h) # receiver y position, used in surface_wavefield
-
-        nrhs = len(sxs)
-        f = np.zeros((nrhs,self.nxyp),dtype=self.dtype)
-        for ishot,isx in enumerate(isxs):
-            f[ishot, (isx+self.npml)*self.nyp + self.isy] = amplitude
-
-        u = self.solver.solve(f)
-        u.shape = (nrhs,self.nxp,self.nyp)
-        return self.cut_pml(u)
+#    def solve_impulse(self, sxs,sy,ry, amplitude=1.0):
+#        isxs = (sxs/self.h).int() # source x position
+#        self.isy = int(sy/self.h) # source y position
+#        self.iry = int(ry/self.h) # receiver y position, used in surface_wavefield
+#
+#        nrhs = len(sxs)
+#        f = np.zeros((nrhs,self.nxyp),dtype=self.dtype)
+#        for ishot,isx in enumerate(isxs):
+#            f[ishot, (isx+self.npml)*self.nyp + self.isy] = amplitude
+#
+#        u = self.solver.solve(f)
+#        u.shape = (nrhs,self.nxp,self.nyp)
+#        return self.cut_pml(u)
 
     def solve_forward(self, sxs,sy, amplitude=1.0):
         # distribute each source on two points (x only)
@@ -59,22 +59,22 @@ class Frequency2dFDM():
         u.shape = (nrhs,self.nxp,self.nyp)
         return self.cut_pml(u)
 
-    def solve_resid(self, resid):
+    def solve_resid(self, resid, ry):
+        iry = int(ry/self.h) # receiver y position
         nrhs = resid.shape[0]
         f = np.zeros((nrhs, self.nxp,self.nyp),dtype=self.dtype)
-        f[:,self.npml:-self.npml,self.iry] = resid[:,:]
+        f[:,self.npml:-self.npml,iry] = resid[:,:]
         f.shape=(nrhs,self.nxyp)
         b = self.solver.solve_transposed(f)
         b.shape = (nrhs,self.nxp,self.nyp)
         return self.cut_pml(b)
 
-    def surface_wavefield(self,u,ry=None):
+    def surface_wavefield(self,u,ry):
         # u: output from solve_forward/solve_impulse
         # input u.shape = (nrhs,nx,ny)
         # ry: receiver y position, full-offset
-        if ry is not None:
-            self.iry = int(ry/self.h) # receiver y position
-        return u[:,:,self.iry]
+        iry = int(ry/self.h) # receiver y position
+        return u[:,:,iry]
 
     def virtual_source(self,u):
         return self.lvirt * u
