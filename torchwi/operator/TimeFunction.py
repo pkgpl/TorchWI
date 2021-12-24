@@ -13,7 +13,8 @@ def _get_propagator(device, prop='ext', exa=False, forward_only=False):
             if forward_only:
                 from torchwi.propagator import td2d_forward_cpu as prop
             elif exa:
-                from torchwi.propagator import td2d_exa_cpu as prop
+                #from torchwi.propagator import td2d_exa_cpu as prop
+                raise NotImplementedError("cpu exa")
             else:
                 from torchwi.propagator import td2d_cpu as prop
         elif prop == 'numba':

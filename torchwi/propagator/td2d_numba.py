@@ -59,6 +59,7 @@ def forward_np(frd, virt,
         virt[it,:] = -2 / vp3 * td2d_base.diff2(u3, u2, u1, dt2).flatten()
         u1, u2 ,u3 = u2, u3, u1
     frd.shape = frd_org_shape
+    return frd
 
 
 def backward_np(virt,
