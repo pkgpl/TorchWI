@@ -1,1 +1,1 @@
-resursive-include torchwi/propagator/td2d/ *
+recursive-include torchwi/propagator/td2d/ *
