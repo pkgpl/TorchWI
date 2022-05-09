@@ -1,8 +1,8 @@
 import torch
 import numpy as np
-from Dataset import TimeDataset, TimeForwardDataset
-from Dataset import FreqDataset
-from Dataset import AllFreqData
+from .Dataset import TimeDataset, TimeForwardDataset
+from .Dataset import FreqDataset
+from .Dataset import AllFreqData
 
 # time shots
 def time_forward_dataloader(sxy, **kwargs):

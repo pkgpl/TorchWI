@@ -1,5 +1,7 @@
 import torch
 import horovod.torch as hvd
+from .Dataset import TimeForwardDataset, TimeDataset
+from .Dataset import AllFreqData
 
 # Time shots
 def _time_dist_dataloader(dataset, size=None,rank=None):
