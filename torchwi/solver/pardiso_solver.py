@@ -209,4 +209,5 @@ class PardisoSolver():
 
         if nrhs > 1:
             x.shape=(nrhs,self.n)
+            rhs.shape=(nrhs,self.n)
         return x
