@@ -1,14 +1,18 @@
 import torch
 import numpy as np
 from torchwi.utils.ctensor import ca2rt, rt2ca
-from torchwi.propagator.FreqProp import Frequency2dFDM as Prop
 
 
 class Freq2d(torch.nn.Module):
-    def __init__(self,nx,ny,h,npml=10,mtype=13,dtype=np.complex64):
+    def __init__(self,nx,ny,h,npml=10,mtype=13,dtype=np.complex64,device='cpu'):
         super(Freq2d, self).__init__()
         self.h=h
-        self.prop = Prop(nx,ny,h,npml,mtype,dtype)
+        if device == 'cpu':
+            from torchwi.propagator.FreqProp import Frequency2dFDM as Prop
+            self.prop = Prop(nx,ny,h,npml,mtype,dtype)
+        else: # cuda
+            from torchwi.propagator.FreqPropGPU import Frequency2dFDMGPU as Prop
+            self.prop = Prop(nx,ny,h,npml,dtype)
         self.op = FreqOperator.apply
 
     def factorize(self, omega, vel):
