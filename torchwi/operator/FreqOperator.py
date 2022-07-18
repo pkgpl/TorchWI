@@ -8,26 +8,26 @@ class Freq2d(torch.nn.Module):
         super(Freq2d, self).__init__()
         self.h=h
         self.device = device
-        if device == 'cpu':
-            from torchwi.propagator.FreqProp import Frequency2dFDM as Prop
-            self.prop = Prop(nx,ny,h,npml,mtype,dtype)
-            print("freq 2d cpu")
-        else: # cuda
-            from torchwi.propagator.FreqPropGPU import Frequency2dFDMGPU as Prop
-            self.prop = Prop(nx,ny,h,npml,dtype)
-            print("freq 2d cuda")
+        from torchwi.propagator.FreqProp import Frequency2dFDM as Prop
+        self.prop = Prop(nx,ny,h,npml,mtype,dtype,device)
         self.op = FreqOperator.apply
+        self.factorized = False
 
     def factorize(self, omega, vel):
         self.vel=vel
         self.omega=omega
         self.prop.factorize(omega,vel)
+        self.factorized = True
 
     def forward(self, sxs,sy,ry,amplitude=1.0):
-        return self.op(self.vel, (self, sxs,sy,ry, amplitude))
+        if self.factorized:
+            return self.op(self.vel, (self, sxs,sy,ry, amplitude))
+        else:
+            raise Exception("Factorization required before forward modeling")
 
     def finalize(self):
         self.prop.solver.clear()
+        self.factorized = False
 
 
 class FreqOperator(torch.autograd.Function):
@@ -56,8 +56,6 @@ class FreqOperator(torch.autograd.Function):
         virt, = ctx.saved_tensors
         model = ctx.model
         ry    = ctx.ry
-
-        resid = torch.from_numpy(grad_output)
 
         if model.device == 'cpu':
             resid = grad_output.numpy()

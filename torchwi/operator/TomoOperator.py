@@ -5,6 +5,11 @@ from .FreqOperator import Freq2d
 from torchwi.utils import to_cupy, to_tensor
 
 
+def traveltime(u,omega_real):
+    ttime = -torch.imag(torch.log(u))/omega_real
+    return ttime.to(torch.float32)
+
+
 class Tomo2d(Freq2d):
     def __init__(self,nx,ny,h,npml=0,mtype=13,dtype=np.complex128,device='cpu'):
         super(Tomo2d, self).__init__(nx,ny,h,npml,mtype,dtype,device)
@@ -12,11 +17,6 @@ class Tomo2d(Freq2d):
 
     def forward(self, sxs,sy,ry):
         return self.op(self.vel, (self, sxs,sy,ry))
-
-
-def traveltime(u,omega_real):
-    ttime = -torch.imag(torch.log(u))/omega_real
-    return ttime.to(torch.float32)
 
 
 class TomoOperator(torch.autograd.Function):

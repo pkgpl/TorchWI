@@ -4,7 +4,6 @@ import cupy as cp
 import scipy.sparse
 import cupyx.scipy.sparse
 import cupyx.scipy.sparse.linalg
-import torch
 from torchwi.utils import to_cupy
 
 
@@ -48,7 +47,7 @@ class CupySolver():
           'H': A.conj().T * x = rhs
         nrhs_first
            True:  rhs.shape = (nrhs, n)
-           False: rhs.shape = (n, nrhs)
+           False(default): rhs.shape = (n, nrhs)
         """
         self.rhs = to_cupy(rhs)
 

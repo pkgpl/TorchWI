@@ -65,6 +65,8 @@ class PardisoSolver():
         self.mnum = 1
         self.msglvl = 1 if verbose else 0
 
+        self.analyzed = False
+        self.factorized = False
         if initialize:
             self.initialize()
 
@@ -88,6 +90,9 @@ class PardisoSolver():
         Clear the memory allocated from the solver.
         '''
         self.run_pardiso(phase=-1)
+        self.analyzed = False
+        self.factorized = False
+
 
     def clear(self):
         self.finalize()
@@ -115,6 +120,7 @@ class PardisoSolver():
         self.perm = np.zeros(self.n,np.int32)
 
         out = self.run_pardiso(phase=11)
+        self.analyzed = True
 
 
     def factorize(self,A=None):
@@ -122,19 +128,48 @@ class PardisoSolver():
             self.a = A.data
             self.ia = A.indptr
             self.ja = A.indices
+            if not self.analyzed:
+                self.analyze(A)
+        elif not self.analyzed:
+            raise Exception("Analyze before factorize")
         out = self.run_pardiso(phase=22)
+        self.factorized = True
 
 
-    def solve(self, rhs):
-        return self.run_pardiso(phase=33, rhs=rhs)
+    def solve(self, rhs, trans='N', nrhs_first=True):
+        """
+        Solve using cpu
+        trans
+          'N': A * x = rhs
+          'T': A.T * x = rhs
+          'H': A.conj().T * x = rhs
+        nrhs_first
+           True(default):  rhs.shape = (nrhs, n)
+           False: rhs.shape = (n, nrhs)
+        """
+        if not self.factorized:
+            raise Exception("Factorize before solve")
 
-    def solve_transposed(self, rhs):
-        if self.mtype in [3,4,-4,6,13]:
-            self.iparm[11] = 2  # solve with conjugate transposed matrix A
-        else:
-            self.iparm[11] = 1  # solve with transposed matrix A
-        x = self.solve(rhs)
+        # https://www.intel.com/content/www/us/en/develop/documentation/onemkl-developer-reference-c/top/sparse-solver-routines/onemkl-pardiso-parallel-direct-sparse-solver-iface/pardiso-iparm-parameter.html
+        if trans=='N':
+            self.iparm[11] = 0 # normal
+        elif trans=='T':
+            self.iparm[11] = 2 # solve with transposed matrix A
+        elif trans=='H':
+            self.iparm[11] = 1 # solve with conjugate transposed matrix A
+
+        self.rhs = rhs
+        if rhs.ndim == 2 and not nrhs_first:
+            # if input  rhs shape = (n, nrhs)
+            # use rhs tranposed to solve: solve rhs shape = (nrhs, n)
+            self.rhs = rhs.T
+
+        x = self.run_pardiso(phase=33, rhs=self.rhs)
+
         self.iparm[11] = 0
+        if rhs.ndim == 2 and not nrhs_first:
+            # if input  rhs shape = (n, nrhs), return x with same shape
+            x = x.T
         return x
 
 

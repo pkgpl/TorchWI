@@ -1,28 +1,51 @@
 import numpy as np
+import cupy as cp
 from .fd2d_base_fdm_pml import impedance_matrix_vpad
-from torchwi.solver.pardiso_solver import PardisoSolver
+from torchwi.utils import to_cupy, to_numpy
 
 
 class Frequency2dFDM():
-    def __init__(self,nx,ny,h,npml=10,mtype=13,dtype=np.complex64):
+    def __init__(self,nx,ny,h,npml=10,mtype=13,dtype=np.complex64,device='cpu'):
         self.nx, self.ny = nx,ny
         self.h = h
         self.dtype = dtype
+        self.device = device
+        self._set_solver(mtype)
         # pml pad
         self.npml=npml
         self.nxp = self.nx+2*npml
         self.nyp = self.ny+npml
         self.nxyp = self.nxp*self.nyp
-        self.solver = PardisoSolver(mtype=mtype, dtype=self.dtype)
-        print("prop fre2d cpu")
+
+    def _set_solver(self,mtype):
+        if self.device == 'cpu':
+            from torchwi.solver.pardiso_solver import PardisoSolver
+            self.solver = PardisoSolver(mtype=mtype, dtype=self.dtype)
+        else:
+            from torchwi.solver.cupy_solver import CupySolver
+            self.solver = CupySolver()
+
+    def _rhs(self,shape):
+        if self.device == 'cpu':
+            f = np.zeros(shape,dtype=self.dtype)
+        else:
+            f = cp.zeros(shape,dtype=self.dtype)
+        return f
+
+    def _set_lvirt(self,omega,vel):
+        if self.device == 'cpu':
+            #vp = vel.data.numpy()
+            vp = to_numpy(vel.data)
+        else:
+            vp = to_cupy(vel.data)
+        self.lvirt = -2*omega**2/vp**3
 
     def factorize(self, omega, vel):
         self.omega = omega
-        vp = vel.data.numpy()
-        self.lvirt = -2*omega**2/vp**3
+        vp = to_numpy(vel.data)
         mat = impedance_matrix_vpad(self.omega, vp, self.h, self.npml,mat='csr',dtype=self.dtype)
-        self.solver.analyze(mat)
-        self.solver.factorize()
+        self.solver.factorize(mat)
+        self._set_lvirt(omega,vel)
 
     def _impulse_source(self, sxs,sy,amplitude=1.0):
         # distribute each source on two points (x only)
@@ -33,7 +56,7 @@ class Frequency2dFDM():
         self.isy = int(sy/self.h) # source y position
 
         nrhs = len(sxs)
-        f = np.zeros((nrhs,self.nxyp),dtype=self.dtype)
+        f = self._rhs((nrhs,self.nxyp))
         for ishot,isx_left in enumerate(isxs_left):
             # left
             f[ishot, (isx_left+self.npml)*self.nyp + self.isy] = wgt_left[ishot] * amplitude
@@ -46,7 +69,7 @@ class Frequency2dFDM():
     def _adjoint_source(self, resid, ry):
         iry = int(ry/self.h) # receiver y position
         nrhs = resid.shape[0]
-        f = np.zeros((nrhs, self.nxp,self.nyp),dtype=self.dtype)
+        f = self._rhs((nrhs,self.nxp,self.nyp))
         if self.npml == 0:
             f[:,:,iry] = resid[:,:]
         else:
@@ -58,14 +81,14 @@ class Frequency2dFDM():
         f = self._impulse_source(sxs,sy,amplitude)
         nrhs = f.shape[0]
 
-        u = self.solver.solve(f)
+        u = self.solver.solve(f, trans='N', nrhs_first=True)
         u.shape = (nrhs,self.nxp,self.nyp)
         return self.cut_pml(u)
 
     def solve_resid(self, resid, ry):
         f = self._adjoint_source(resid, ry)
         nrhs = f.shape[0]
-        b = self.solver.solve_transposed(f)
+        b = self.solver.solve(f,trans='T', nrhs_first=True)
         b.shape = (nrhs,self.nxp,self.nyp)
         return self.cut_pml(b)
 
