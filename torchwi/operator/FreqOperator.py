@@ -1,18 +1,21 @@
 import torch
 import numpy as np
-from torchwi.utils.ctensor import ca2rt, rt2ca
+from torchwi.utils import to_cupy, to_tensor
 
 
 class Freq2d(torch.nn.Module):
     def __init__(self,nx,ny,h,npml=10,mtype=13,dtype=np.complex64,device='cpu'):
         super(Freq2d, self).__init__()
         self.h=h
+        self.device = device
         if device == 'cpu':
             from torchwi.propagator.FreqProp import Frequency2dFDM as Prop
             self.prop = Prop(nx,ny,h,npml,mtype,dtype)
+            print("freq 2d cpu")
         else: # cuda
             from torchwi.propagator.FreqPropGPU import Frequency2dFDMGPU as Prop
             self.prop = Prop(nx,ny,h,npml,dtype)
+            print("freq 2d cuda")
         self.op = FreqOperator.apply
 
     def factorize(self, omega, vel):
@@ -43,8 +46,8 @@ class FreqOperator(torch.autograd.Function):
         # save for gradient calculation
         ctx.model = model
         ctx.ry = ry
-        ctx.save_for_backward(ca2rt(virt))
-        return ca2rt(frd)
+        ctx.save_for_backward(to_tensor(virt))
+        return to_tensor(frd)
 
     @staticmethod
     def backward(ctx, grad_output):
@@ -54,11 +57,14 @@ class FreqOperator(torch.autograd.Function):
         model = ctx.model
         ry    = ctx.ry
 
-        # float32 tensor to complex64 ndarray
-        virt = rt2ca(virt)
-        resid = rt2ca(grad_output)
+        resid = torch.from_numpy(grad_output)
+
+        if model.device == 'cpu':
+            resid = grad_output.numpy()
+        else:
+            resid = to_cupy(grad_output)
 
         b = model.prop.solve_resid(resid,ry)
-        grad_input = torch.sum(torch.from_numpy(np.real(virt*b)), dim=0)
+        grad_input = torch.sum(torch.real(virt*to_tensor(b)), dim=0)
         return grad_input, None
 

@@ -14,6 +14,7 @@ class Frequency2dFDM():
         self.nyp = self.ny+npml
         self.nxyp = self.nxp*self.nyp
         self.solver = PardisoSolver(mtype=mtype, dtype=self.dtype)
+        print("prop fre2d cpu")
 
     def factorize(self, omega, vel):
         self.omega = omega

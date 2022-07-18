@@ -1,6 +1,7 @@
 import numpy as np
 from .fd2d_base_fdm_pml import impedance_matrix_vpad
-from torchwi.solver.cupy_solver import CupySolver, to_cupy, to_tensor
+from torchwi.solver.cupy_solver import CupySolver
+from torchwi.utils import to_cupy, to_tensor
 import cupy as cp
 
 

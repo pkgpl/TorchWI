@@ -5,27 +5,7 @@ import scipy.sparse
 import cupyx.scipy.sparse
 import cupyx.scipy.sparse.linalg
 import torch
-
-def to_cupy(a):
-    # https://docs.cupy.dev/en/stable/user_guide/interoperability.html
-    if type(a) == cp._core.core.ndarray:
-        a_cp = a
-    elif type(a) == torch.Tensor:
-        a_cp = cp.asarray(a)
-        assert a_cp.__cuda_array_interface__['data'][0] == a.__cuda_array_interface__['data'][0]
-    else: # np.ndarray
-        a_cp = cp.asarray(a)
-    return a_cp
-
-def to_tensor(a, device='cuda:0'):
-    if type(a) == torch.Tensor:
-        a_t = a
-    elif type(a) == cp._core.core.ndarray:
-        a_t = torch.as_tensor(a, device=device)
-        assert a.__cuda_array_interface__['data'][0] == a_t.__cuda_array_interface__['data'][0]
-    else: # np.ndarray
-        a_t =  torch.from_numpy(a).to(device)
-    return a_t
+from torchwi.utils import to_cupy
 
 
 class CupySolver():
