@@ -25,10 +25,10 @@ def lapl_dataloader(freqs, ifreqs=None):
     return freq_dataloader(freqs,ifreqs)
 
 # shots in the freq/lapl
-def freq_shot_dataloader(ftrue,sxy_all,nrhs,dtype):
-    dataset = FreqDataset(ftrue,sxy_all,dtype)
+def freq_shot_dataloader(ftrue,sxy_all,nrhs,dtype,device='cpu'):
+    dataset = FreqDataset(ftrue,sxy_all,dtype,device)
     dataloader =  torch.utils.data.DataLoader(dataset,batch_size=nrhs)
     return dataloader
 
-def lapl_shot_dataloader(ftrue,sxy_all,nrhs,dtype=np.float64):
-    return freq_shot_dataloader(ftrue,sxy_all,nrhs,dtype)
+def lapl_shot_dataloader(ftrue,sxy_all,nrhs,dtype=np.float64,device='cpu'):
+    return freq_shot_dataloader(ftrue,sxy_all,nrhs,dtype,device)

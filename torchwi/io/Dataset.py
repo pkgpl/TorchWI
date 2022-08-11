@@ -36,17 +36,17 @@ class TimeDataset(torch.utils.data.Dataset):
         return torch.from_numpy(truedata)
 
     def load_bin(self, index):
-        truedata = np.fromfile("%s%04d.bin"%(self.ftrue, index),dtype=np.float32)
+        truedata = np.fromfile(self.ftrue%index,dtype=np.float32)
         if self.shape:
             truedata.shape = shape
         return truedata
 
     def load_npy(self, index):
-        return np.load("%s%04d.npy"%(self.ftrue, index))
+        return np.load(self.ftrue%index)
 
     def load_su(self, index):
         from pkrh.io import su
-        return su.fromfile("%s%04d.su"%(self.ftrue, index), key='data')
+        return su.fromfile(self.ftrue%index, key='data')
 
 
 class TimeForwardDataset(torch.utils.data.Dataset):
@@ -69,7 +69,7 @@ class TimeForwardDataset(torch.utils.data.Dataset):
 
 # freq
 
-def load_data(ftrue,nshot,dtype):
+def load_data(ftrue,nshot,dtype,device='cpu'):
     # truedata: traveltime (nshot, nx) for float
     # truedata: traveltime (nshot, 2*nx) for complex
     if dtype in [np.float32, np.float64]:
@@ -79,15 +79,15 @@ def load_data(ftrue,nshot,dtype):
     else:
         sys.stderr.write("Dataset: Wrong data type")
         sys.exit(1)
-    return truedata.view(nshot,-1)
+    return truedata.view(nshot,-1).to(device)
 
 
 class FreqDataset(torch.utils.data.Dataset):
-    def __init__(self, ftrue, sxy_all, dtype):
+    def __init__(self, ftrue, sxy_all, dtype, device='cpu'):
         super().__init__()
-        self.sxy_all = sxy_all
+        self.sxy_all = sxy_all.to(device)
         self.nshot = len(sxy_all)
-        self.truedata = load_data(ftrue,self.nshot,dtype)
+        self.truedata = load_data(ftrue,self.nshot,dtype,device)
 
     def __len__(self):
         return self.nshot
@@ -112,7 +112,7 @@ class AllFreqData(torch.utils.data.Dataset):
 # lapl
 
 class LaplDataset(FreqDataset):
-    def __init__(self, ftrue, sxy_all):
-        super().__init__(ftrue, sxy_all, dtype=np.float64)
+    def __init__(self, ftrue, sxy_all, dtype=np.float64, device='cpu'):
+        super().__init__(ftrue, sxy_all, dtype, device)
 
 
