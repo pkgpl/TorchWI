@@ -17,7 +17,7 @@ class BaseSourceEstimation():
         pass
 
     def amplitude(self):
-        return self.amp
+        return self.amp.item()
 
 
 class FreqL2SourceEstimation(BaseSourceEstimation):
