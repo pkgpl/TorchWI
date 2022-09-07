@@ -1,7 +1,8 @@
 import numpy as np
 import cupy as cp
 from .fd2d_base_fdm_pml import impedance_matrix_vpad
-from torchwi.utils import to_cupy, to_numpy
+from torchwi.utils import to_cupy, to_numpy, to_tensor
+import torch
 
 
 class Frequency2dFDM():
@@ -17,6 +18,7 @@ class Frequency2dFDM():
         self.nyp = self.ny+npml
         self.nxyp = self.nxp*self.nyp
 
+    @torch.no_grad()
     def _set_solver(self,mtype):
         if self.device == 'cpu':
             from torchwi.solver.pardiso_solver import PardisoSolver
@@ -25,6 +27,7 @@ class Frequency2dFDM():
             from torchwi.solver.cupy_solver import CupySolver
             self.solver = CupySolver()
 
+    @torch.no_grad()
     def _rhs(self,shape):
         if self.device == 'cpu':
             f = np.zeros(shape,dtype=self.dtype)
@@ -32,14 +35,11 @@ class Frequency2dFDM():
             f = cp.zeros(shape,dtype=self.dtype)
         return f
 
+    @torch.no_grad()
     def _set_lvirt(self,omega,vel):
-        if self.device == 'cpu':
-            #vp = vel.data.numpy()
-            vp = to_numpy(vel.data)
-        else:
-            vp = to_cupy(vel.data)
-        self.lvirt = -2*omega**2/vp**3
+        self.lvirt = -2*omega**2/vel**3
 
+    @torch.no_grad()
     def factorize(self, omega, vel):
         self.omega = omega
         vp = to_numpy(vel.data)
@@ -47,6 +47,7 @@ class Frequency2dFDM():
         self.solver.factorize(mat)
         self._set_lvirt(omega,vel)
 
+    @torch.no_grad()
     def _impulse_source(self, sxs,sy,amplitude=1.0):
         # distribute each source on two points (x only)
         isxs_left = (sxs/self.h).int() # source x position
@@ -66,6 +67,7 @@ class Frequency2dFDM():
                 f[ishot, (isx_right+self.npml)*self.nyp + self.isy] = wgt_right[ishot] * amplitude
         return f
 
+    @torch.no_grad()
     def _adjoint_source(self, resid, ry):
         iry = int(ry/self.h) # receiver y position
         nrhs = resid.shape[0]
@@ -77,6 +79,7 @@ class Frequency2dFDM():
         f.shape=(nrhs,self.nxyp)
         return f
 
+    @torch.no_grad()
     def solve_forward(self, sxs,sy, amplitude=1.0):
         f = self._impulse_source(sxs,sy,amplitude)
         nrhs = f.shape[0]
@@ -85,31 +88,41 @@ class Frequency2dFDM():
         u.shape = (nrhs,self.nxp,self.nyp)
         return self.cut_pml(u)
 
-    def solve_resid(self, resid, ry):
+    @torch.no_grad()
+    def solve_resid(self, resid_t, ry):
+        if self.device == 'cpu':
+            resid = to_numpy(resid_t)
+        else:
+            resid = to_cupy(resid_t)
         f = self._adjoint_source(resid, ry)
         nrhs = f.shape[0]
         b = self.solver.solve(f,trans='T', nrhs_first=True)
         b.shape = (nrhs,self.nxp,self.nyp)
         return self.cut_pml(b)
 
+    @torch.no_grad()
     def surface_wavefield(self,u,ry):
         # u: output from solve_forward/solve_impulse
         # input u.shape = (nrhs,nx,ny)
         # ry: receiver y position, full-offset
         iry = int(ry/self.h) # receiver y position
-        return u[:,:,iry]
+        return to_tensor(u[:,:,iry])
 
+    @torch.no_grad()
     def virtual_source(self,u):
         return self.lvirt * u
 
+    @torch.no_grad()
     def cut_pml(self,u):
         if self.npml == 0:
-            return u
+            return to_tensor(u)
         else:
-            return u[:,self.npml:-self.npml,:-self.npml]
+            return to_tensor(u[:,self.npml:-self.npml,:-self.npml])
 
+    @torch.no_grad()
     def finalize(self):
         self.solver.clear()
+        del self.lvirt
 
 
 

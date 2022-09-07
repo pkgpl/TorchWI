@@ -4,15 +4,15 @@ from numba import jit
 from .pml_base import pml_damp, pml_pad
 
 
-def impedance_matrix_vpad(omega, vel, h, npml, mat='csr', Dtype=np.float64):
-    return impedance_matrix(omega, pml_pad(vel, npml), h, npml, mat, Dtype)
+def impedance_matrix_vpad(omega, vel, h, npml, mat='csr', dtype=np.float64):
+    return impedance_matrix(omega, pml_pad(vel, npml), h, npml, mat, dtype)
 
 
-def impedance_matrix(omega, vel, h, npml, mat='csr', Dtype=np.float64):
+def impedance_matrix(omega, vel, h, npml, mat='csr', dtype=np.float64):
     nx, ny = vel.shape
     nxy = nx * ny
     dampx, dampy = pml_damp(npml, vel, h)
-    row, col, val = assemble_coo(omega, vel, h, dampx, dampy, Dtype)
+    row, col, val = assemble_coo(omega, vel, h, dampx, dampy, dtype)
     if mat == 'csr':
         return csr_matrix((val, (row, col)), shape=(nxy, nxy))
     elif mat == 'csc':
@@ -26,7 +26,7 @@ def impedance_matrix(omega, vel, h, npml, mat='csr', Dtype=np.float64):
 
 
 @jit
-def assemble_coo(omega, v, h, dampx, dampy, Dtype=np.float64):
+def assemble_coo(omega, v, h, dampx, dampy, dtype=np.float64):
     nx, ny = v.shape
     xix = 1. - dampx / omega
     xiy = 1. - dampy / omega
@@ -36,7 +36,7 @@ def assemble_coo(omega, v, h, dampx, dampy, Dtype=np.float64):
     lindex = nx * ny * 5
     row = np.zeros(lindex, dtype=np.int32)
     col = np.zeros_like(row)
-    val = np.zeros(lindex, dtype=Dtype)
+    val = np.zeros(lindex, dtype=dtype)
 
     ie = 0
     for ix in range(nx):
