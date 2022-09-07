@@ -25,7 +25,7 @@ class Freq2d(torch.nn.Module):
 
     @torch.no_grad()
     def finalize(self):
-        self.prop.solver.clear()
+        self.prop.finalize()
         self.factorized = False
         del self.vel
 

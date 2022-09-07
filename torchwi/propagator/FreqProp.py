@@ -121,7 +121,7 @@ class Frequency2dFDM():
 
     @torch.no_grad()
     def finalize(self):
-        self.solver.clear()
+        self.solver.finalize()
         del self.lvirt
 
 
