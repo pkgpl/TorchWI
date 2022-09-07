@@ -6,10 +6,10 @@ import torch
 
 
 class Frequency2dFDM():
-    def __init__(self,nx,ny,h,npml=10,mtype=13,dtype=np.complex64,device='cpu'):
+    def __init__(self,nx,ny,h,npml=10,mtype=13,dtype='complex64',device='cpu'):
         self.nx, self.ny = nx,ny
         self.h = h
-        self.dtype = dtype
+        self.dtype = np.dtype(dtype)
         self.device = device
         self._set_solver(mtype)
         # pml pad

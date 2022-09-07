@@ -1,10 +1,9 @@
 import torch
-import numpy as np
 from torchwi.propagator.FreqProp import Frequency2dFDM as Prop
 
 
 class Freq2d(torch.nn.Module):
-    def __init__(self,nx,ny,h,npml=10,mtype=13,dtype=np.complex64,device='cpu'):
+    def __init__(self,nx,ny,h,npml=10,mtype=13,dtype='complex64',device='cpu'):
         super(Freq2d, self).__init__()
         self.h=h
         self.device = device

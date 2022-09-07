@@ -6,7 +6,7 @@ import torch
 
 
 class Laplace2dFDM(Frequency2dFDM):
-    def __init__(self,nx,ny,h,npml=10,mtype=11,dtype=np.float64,device='cpu'):
+    def __init__(self,nx,ny,h,npml=10,mtype=11,dtype='float64',device='cpu'):
         super().__init__(nx,ny,h,npml,mtype,dtype,device)
 
     @torch.no_grad()
