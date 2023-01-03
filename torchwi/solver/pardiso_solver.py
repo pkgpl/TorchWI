@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 from numpy import ctypeslib
+from torchwi.utils import to_numpy, to_tensor
 
 from .pardiso_interface import pardisoinit, pardiso
 
@@ -158,7 +159,7 @@ class PardisoSolver():
         elif trans=='H':
             self.iparm[11] = 1 # solve with conjugate transposed matrix A
 
-        self.rhs = rhs
+        self.rhs = to_numpy(rhs)
         if rhs.ndim == 2 and not nrhs_first:
             # if input  rhs shape = (n, nrhs)
             # use rhs tranposed to solve: solve rhs shape = (nrhs, n)
@@ -170,7 +171,7 @@ class PardisoSolver():
         if rhs.ndim == 2 and not nrhs_first:
             # if input  rhs shape = (n, nrhs), return x with same shape
             x = x.T
-        return x
+        return to_tensor(x)
 
 
     def run_pardiso(self, phase, rhs=None):

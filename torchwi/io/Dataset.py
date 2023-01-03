@@ -70,15 +70,8 @@ class TimeForwardDataset(torch.utils.data.Dataset):
 # freq
 
 def load_data(ftrue,nshot,dtype,device='cpu'):
-    # truedata: traveltime (nshot, nx) for float
-    # truedata: traveltime (nshot, 2*nx) for complex
-    if dtype in [np.float32, np.float64]:
-        truedata = torch.from_numpy(np.fromfile(ftrue,dtype=dtype))
-    elif dtype in [np.complex64, np.complex128]:
-        truedata = ca2rt(np.fromfile(ftrue,dtype=dtype))
-    else:
-        sys.stderr.write("Dataset: Wrong data type")
-        sys.exit(1)
+    # truedata: traveltime (nshot, nx)
+    truedata = torch.from_numpy(np.fromfile(ftrue,dtype=dtype))
     return truedata.view(nshot,-1).to(device)
 
 

@@ -15,13 +15,13 @@ class LaplLogSourceEstimation(BaseSourceEstimation):
 
     @torch.no_grad()
     def add_resid(self, resid):
-        self.sum_amp += torch.sum(resid)
-        self.isum    += torch.sum(resid != 0)
+        self.sum_amp += torch.sum(resid.data)
+        self.isum    += torch.sum(resid.data != 0)
 
     @torch.no_grad()
     def add(self, frd,true):
-        mask = (torch.abs(true) > self.log_tolmin) & (torch.abs(frd) > self.log_tolmin)
-        resid = torch.where(mask, torch.log(torch.abs(frd/true)), self.torch_zero)
+        mask = (torch.abs(true) > self.log_tolmin) & (torch.abs(frd.data) > self.log_tolmin)
+        resid = torch.where(mask, torch.log(torch.abs(frd.data/true)), self.torch_zero)
         self.sum_amp += torch.sum(resid)
         self.isum += torch.sum(mask)
 

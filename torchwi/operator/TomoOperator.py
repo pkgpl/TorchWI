@@ -15,8 +15,8 @@ class Tomo2d(Freq2d):
         super(Tomo2d, self).__init__(nx,ny,h,npml,mtype,dtype,device)
         self.op = TomoOperator.apply
 
-    def forward(self, sxs,sy,ry):
-        return self.op(self.vel, (self, sxs,sy,ry))
+    def forward(self, vel, sxs,sy,ry):
+        return self.op(vel, (self, sxs,sy,ry))
 
 
 class TomoOperator(torch.autograd.Function):
@@ -29,29 +29,47 @@ class TomoOperator(torch.autograd.Function):
         # virt: (nrhs,nx,ny)
         model, sxs,sy,ry = args # input: source x position, sy, ry, source amplitude
 
-        u    = model.prop.solve_forward(sxs,sy)
-        frd  = model.prop.surface_wavefield(u,ry)
-        virt = model.prop.virtual_source(u)
-        frd = to_tensor(frd)
+        model.prop.solve_forward(sxs,sy)
+        #u    = model.prop.solve_forward(sxs,sy)
+        frd  = model.prop.surface_wavefield(ry)
+        #frd  = model.prop.surface_wavefield(u,ry)
+        #virt = model.prop.virtual_source(u)
+        #virt = model.prop.lvirt * model.prop.cut_pml(model.prop.u)
+
+        ###frd = to_tensor(frd)
         # save for gradient calculation
         ctx.model = model
         ctx.ry = ry
-        ctx.save_for_backward(to_tensor(virt),frd)
-        return traveltime(frd,model.omega.real)
+        ctx.save_for_backward(frd)
+        #ctx.save_for_backward(to_tensor(virt),frd)
+        ttime = traveltime(frd,model.omega.real)
+        #print('vel',vel.dtype)
+        #print('ttime',ttime.dtype)
+        return ttime
 
     @staticmethod
     def backward(ctx, grad_output):
         # resid = grad_output: (nrhs,nx), traveltime difference
         # b: (nrhs,nx,ny)
-        virt,frd = ctx.saved_tensors
+        #virt,frd = ctx.saved_tensors
+        frd, = ctx.saved_tensors
         model = ctx.model
         ry    = ctx.ry
 
-        if model.device == 'cpu':
-            resid = -model.prop.omega.real * grad_output.numpy() / frd
-        else:
-            resid = -model.prop.omega.real * to_cupy(grad_output) / frd
+        #if model.device == 'cpu':
+        #    resid = -model.omega.real * grad_output.numpy() / frd
+        #else:
+        #    resid = -model.omega.real * grad_output / frd
+        #    #resid = -model.omega.real * to_cupy(grad_output) / frd
+        resid = -model.omega.real * grad_output / frd
+        #resid = to_tensor(resid)
+        #print('grad_output',grad_output.dtype)
+        #print('resid',resid.shape)
 
-        b = model.prop.solve_resid(resid,ry)
-        grad_input = torch.sum(torch.imag(virt*to_tensor(b)).to(torch.float32), dim=0)
+
+        model.prop.solve_resid(resid)
+        #b = model.prop.solve_resid(resid)
+        grad_input = model.prop.gradient('imag')
+        #grad_input = torch.sum(torch.imag(virt*to_tensor(b)).to(torch.float32), dim=0)
+        #print('grad_input',grad_input.dtype)
         return grad_input, None

@@ -5,7 +5,8 @@ import cupy as cp
 
 def to_cupy(a):
     # https://docs.cupy.dev/en/stable/user_guide/interoperability.html
-    if type(a) == cp._core.core.ndarray:
+    if type(a) == cp.ndarray:
+    #if type(a) == cp._core.core.ndarray:
         return a
     elif type(a) == torch.Tensor:
         with cp.cuda.Device(a.get_device()):
@@ -19,7 +20,8 @@ def to_cupy(a):
 def to_tensor(a):
     if type(a) == torch.Tensor:
         return a
-    elif type(a) == cp._core.core.ndarray:
+    elif type(a) == cp.ndarray:
+    #elif type(a) == cp._core.core.ndarray:
         a_t = torch.as_tensor(a, device='cuda:%d'%(a.device.id))
         assert a.__cuda_array_interface__['data'][0] == a_t.__cuda_array_interface__['data'][0]
         return a_t
@@ -31,6 +33,7 @@ def to_numpy(a):
     if type(a) == np.ndarray:
         return a
     elif type(a) == torch.Tensor:
+        #a_np = a.data.cpu().numpy()
         if a.requires_grad:
             a_np = a.detach().cpu().numpy()
         else:

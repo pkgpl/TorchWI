@@ -1,8 +1,8 @@
 import numpy as np
 from .ld2d_base_fdm_pml import impedance_matrix_vpad
 from .FreqProp import Frequency2dFDM
-from torchwi.utils import to_numpy
 import torch
+from torchwi.utils import to_numpy
 
 
 class Laplace2dFDM(Frequency2dFDM):
@@ -12,11 +12,11 @@ class Laplace2dFDM(Frequency2dFDM):
     @torch.no_grad()
     def factorize(self, s, vel):
         self.s = -np.abs(s) # negative damping
-        vp = to_numpy(vel.data)
-        mat = impedance_matrix_vpad(self.s, vp, self.h, self.npml, mat='csr',dtype=self.dtype)
+        mat = impedance_matrix_vpad(self.s, to_numpy(vel), self.h, self.npml, mat='csr',dtype=self.dtype)
         self.solver.factorize(mat)
-        self._set_lvirt(s,vel)
+        self._set_lvirt(self.s,vel)
 
     @torch.no_grad()
     def _set_lvirt(self,s,vel):
         self.lvirt = 2*s**2/vel**3
+
