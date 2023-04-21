@@ -1,8 +1,7 @@
 import torch
 import numpy as np
-import cupy as cp
 from .FreqOperator import Freq2d
-from torchwi.utils import to_cupy, to_tensor
+from torchwi.utils import to_tensor
 
 
 def traveltime(u,omega_real):
@@ -56,15 +55,7 @@ class TomoOperator(torch.autograd.Function):
         model = ctx.model
         ry    = ctx.ry
 
-        #if model.device == 'cpu':
-        #    resid = -model.omega.real * grad_output.numpy() / frd
-        #else:
-        #    resid = -model.omega.real * grad_output / frd
-        #    #resid = -model.omega.real * to_cupy(grad_output) / frd
         resid = -model.omega.real * grad_output / frd
-        #resid = to_tensor(resid)
-        #print('grad_output',grad_output.dtype)
-        #print('resid',resid.shape)
 
 
         model.prop.solve_resid(resid)
